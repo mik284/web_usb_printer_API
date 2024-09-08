@@ -14,6 +14,7 @@
             <button id="connect">Connect to USB Printer</button>
             <button id="print" disabled>Print Test Page</button>
         </div>
+        <p id="status">Not connected</p>
     </div>
 
     <script>
@@ -21,6 +22,7 @@
 
         const connectButton = document.getElementById('connect');
         const printButton = document.getElementById('print');
+         const statusElement = document.getElementById('status');
 
         connectButton.addEventListener('click', async () => {
             try {
@@ -35,6 +37,8 @@
                 printButton.disabled = false;
             } catch (error) {
                 console.error('Error connecting to printer:', error);
+                statusElement.textContent = 'Error connecting to printer';
+                statusElement.style.color = 'red';
             }
         });
 
@@ -50,8 +54,12 @@
 
                 await device.transferOut(1, data);
                 console.log('Print data sent successfully');
+                statusElement.textContent = 'Print data sent successfully';
+                statusElement.style.color = 'green';
             } catch (error) {
                 console.error('Error sending print data:', error);
+                statusElement.textContent = 'Error sending print data';
+                statusElement.style.color = 'red';
             }
         });
     </script>

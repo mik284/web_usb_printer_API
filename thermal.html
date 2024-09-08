@@ -15,6 +15,7 @@
             <button id="connect">Connect to Thermal Printer</button>
             <button id="print" disabled>Print Test Receipt</button>
         </div>
+        <p id="status">Not connected</p>
     </div>
     
     <script>
@@ -22,6 +23,7 @@
 
         const connectButton = document.getElementById('connect');
         const printButton = document.getElementById('print');
+        const statusElement = document.getElementById('status');
 
         connectButton.addEventListener('click', async () => {
             try {
@@ -34,8 +36,13 @@
 
                 console.log('Connected to thermal printer:', device);
                 printButton.disabled = false;
+
+                statusElement.textContent = 'Connected to thermal printer';
+                statusElement.style.color = '#4CAF50';
             } catch (error) {
                 console.error('Error connecting to printer:', error);
+                statusElement.textContent = 'Error connecting to printer';
+                statusElement.style.color = '#f44336';
             }
         });
 
@@ -73,8 +80,12 @@
                 const data = encoder.encode(commands.join('\n'));
                 await device.transferOut(1, data);
                 console.log('Print data sent successfully');
+                statusElement.textContent = 'Print data sent successfully';
+                statusElement.style.color = '#4CAF50';
             } catch (error) {
                 console.error('Error sending print data:', error);
+                statusElement.textContent = 'Error sending print data';
+                statusElement.style.color = '#f44336';
             }
         });
     </script>

@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head>    
+    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web USB Printer Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <title>Web USB Printer</title>
 </head>
 <body>
-    <h1>Web USB Printer Example</h1>
-    <button id="connect">Connect to USB Printer</button>
-    <button id="print" disabled>Print Test Page</button>
+    <div class="container">
+        <img class="thermal-printer" src="assets/images/usb-printer.png" alt="Web USB Printer">
+        <h1>Web USB Printer</h1>
+        <div>
+            <button id="connect">Connect to USB Printer</button>
+            <button id="print" disabled>Print Test Page</button>
+        </div>
+    </div>
 
     <script>
         let device;
@@ -24,7 +30,7 @@
                 await device.open();
                 await device.selectConfiguration(1);
                 await device.claimInterface(0);
-                
+
                 console.log('Connected to printer:', device);
                 printButton.disabled = false;
             } catch (error) {
@@ -41,7 +47,7 @@
             try {
                 const encoder = new TextEncoder();
                 const data = encoder.encode('Hello, Web USB Printer!\n');
-                
+
                 await device.transferOut(1, data);
                 console.log('Print data sent successfully');
             } catch (error) {
@@ -50,4 +56,5 @@
         });
     </script>
 </body>
+
 </html>

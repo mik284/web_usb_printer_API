@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web USB Thermal Printer</title>
+</head>
+
+<body>
+    <div class="container">
+        <img class="thermal-printer" src="assets/images/thermal.png" alt="Web USB Printer">
+        <h1>Web USB Thermal Printer</h1>
+        <div>
+            <button id="connect">Connect to Thermal Printer</button>
+            <button id="print" disabled>Print Test Receipt</button>
+        </div>
+    </div>
+    
+    <script>
+        let device;
+
+        const connectButton = document.getElementById('connect');
+        const printButton = document.getElementById('print');
+
+        connectButton.addEventListener('click', async () => {
+            try {
+                device = await navigator.usb.requestDevice({
+                    filters: [{ classCode: 0x07 }] // USB printer class
+                });
+                await device.open();
+                await device.selectConfiguration(1);
+                await device.claimInterface(0);
+
+                console.log('Connected to thermal printer:', device);
+                printButton.disabled = false;
+            } catch (error) {
+                console.error('Error connecting to printer:', error);
+            }
+        });
+
+        printButton.addEventListener('click', async () => {
+            if (!device) {
+                console.error('No printer connected');
+                return;
+            }
+
+            try {
+                const encoder = new TextEncoder();
+                const esc = '\x1B';
+                const newline = '\x0A';
+
+                const commands = [
+                    `${esc}@`,     // Initialize printer
+                    `${esc}!1`,    // Bold text
+                    'Web USB Thermal Printer Test',
+                    newline,
+                    newline,
+                    `${esc}!0`,    // Normal text
+                    'This is a test receipt printed using Web USB.',
+                    newline,
+                    'Date: ' + new Date().toLocaleString(),
+                    newline,
+                    newline,
+                    'Thank you for your purchase!',
+                    newline,
+                    newline,
+                    newline,
+                    newline,
+                    `${esc}i`,     // Cut paper
+                ];
+
+                const data = encoder.encode(commands.join('\n'));
+                await device.transferOut(1, data);
+                console.log('Print data sent successfully');
+            } catch (error) {
+                console.error('Error sending print data:', error);
+            }
+        });
+    </script>
+</body>
+
+</html>

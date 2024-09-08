@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web USB Printer Example</title>
+</head>
+<body>
+    <h1>Web USB Printer Example</h1>
+    <button id="connect">Connect to USB Printer</button>
+    <button id="print" disabled>Print Test Page</button>
+
+    <script>
+        let device;
+
+        const connectButton = document.getElementById('connect');
+        const printButton = document.getElementById('print');
+
+        connectButton.addEventListener('click', async () => {
+            try {
+                device = await navigator.usb.requestDevice({
+                    filters: [{ classCode: 0x07 }] // USB printer class
+                });
+                await device.open();
+                await device.selectConfiguration(1);
+                await device.claimInterface(0);
+                
+                console.log('Connected to printer:', device);
+                printButton.disabled = false;
+            } catch (error) {
+                console.error('Error connecting to printer:', error);
+            }
+        });
+
+        printButton.addEventListener('click', async () => {
+            if (!device) {
+                console.error('No printer connected');
+                return;
+            }
+
+            try {
+                const encoder = new TextEncoder();
+                const data = encoder.encode('Hello, Web USB Printer!\n');
+                
+                await device.transferOut(1, data);
+                console.log('Print data sent successfully');
+            } catch (error) {
+                console.error('Error sending print data:', error);
+            }
+        });
+    </script>
+</body>
+</html>

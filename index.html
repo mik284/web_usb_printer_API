@@ -1,74 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>    
-    <link rel="stylesheet" href="style.css">
+
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
-    <title>Web USB Printer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi Printer</title>
 </head>
+
 <body>
-    <div class="container">
-        <div class="navbar">
-            <a href="../index.html">Home</a>
-            <a href="index.html">Printer</a>
-            <a href="thermal.html">Thermal Printer</a>
+    <h1>Wi-Fi Printer</h1>
+
+    <div>
+        <label for="printer-list">Available Printers:</label>
+        <select id="printer-list">
+            <option value="" disabled selected>Select a printer</option>
+            <option value="192.168.100.89">Printer 1 (192.168.100.89)</option>
+            <option value="192.168.100.1">Printer 2 (192.168.100.1)</option>
+            <option value="manual">Enter IP Manually</option>
+        </select>
+        <div id="manual-input" style="display: none;">
+            <input type="text" id="printer-ip" placeholder="Enter Printer IP Address">
         </div>
-        
-        <img class="thermal-printer" src="assets/images/usb-printer.png" alt="Web USB Printer">
-        <h1>Web USB Printer</h1>
-        <div>
-            <button id="connect">Connect to USB Printer</button>
-            <button id="print" disabled>Print Test Page</button>
-        </div>
-        <p id="status">Not connected</p>
+        <button id="connect">Connect to Printer</button>
+        <button id="print" disabled>Print Test Page</button>
     </div>
 
-    <script>
-        let device;
+    <p id="status">Not connected</p>
 
-        const connectButton = document.getElementById('connect');
-        const printButton = document.getElementById('print');
-         const statusElement = document.getElementById('status');
+<script>
+    let ws;
+    let connected = false;
 
-        connectButton.addEventListener('click', async () => {
-            try {
-                device = await navigator.usb.requestDevice({
-                    filters: [{ classCode: 0x07 }] // USB printer class
-                });
-                await device.open();
-                await device.selectConfiguration(1);
-                await device.claimInterface(0);
+    const connectButton = document.getElementById('connect');
+    const printButton = document.getElementById('print');
+    const statusElement = document.getElementById('status');
+    const printerList = document.getElementById('printer-list');
+    const printerIPInput = document.getElementById('printer-ip');
+    const manualInputDiv = document.getElementById('manual-input');
 
-                console.log('Connected to printer:', device);
-                printButton.disabled = false;
-            } catch (error) {
-                console.error('Error connecting to printer:', error);
-                statusElement.textContent = 'Error connecting to printer';
-                statusElement.style.color = 'red';
-            }
-        });
+    printerList.addEventListener('change', (event) => {
+        if (event.target.value === 'manual') {
+            manualInputDiv.style.display = 'block';
+        } else {
+            manualInputDiv.style.display = 'none';
+        }
+    });
 
-        printButton.addEventListener('click', async () => {
-            if (!device) {
-                console.error('No printer connected');
-                return;
-            }
+    connectButton.addEventListener('click', () => {
+        let printerIP = printerList.value;
 
-            try {
-                const encoder = new TextEncoder();
-                const data = encoder.encode('Hello, Web USB Printer!\n');
+        if (printerIP === 'manual') {
+            printerIP = printerIPInput.value;
+        }
 
-                await device.transferOut(1, data);
-                console.log('Print data sent successfully');
-                statusElement.textContent = 'Print data sent successfully';
-                statusElement.style.color = 'green';
-            } catch (error) {
-                console.error('Error sending print data:', error);
-                statusElement.textContent = 'Error sending print data';
-                statusElement.style.color = 'red';
-            }
-        });
-    </script>
+        if (!printerIP) {
+            alert('Please select or enter a valid printer IP address.');
+            return;
+        }
+
+        ws = new WebSocket('ws://localhost:8080');
+
+        ws.onopen = () => {
+            connected = true;
+            statusElement.textContent = 'Connected to WebSocket server';
+            statusElement.style.color = 'green';
+            printButton.disabled = false;
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+            statusElement.textContent = 'Error connecting to WebSocket server';
+            statusElement.style.color = 'red';
+        };
+
+        ws.onclose = () => {
+            connected = false;
+            statusElement.textContent = 'Disconnected from WebSocket server';
+            statusElement.style.color = 'red';
+            printButton.disabled = true;
+        };
+    });
+
+    printButton.addEventListener('click', () => {
+        if (!connected || !ws) {
+            console.error('Not connected to WebSocket server');
+            return;
+        }
+
+        // ESC/POS commands for printing "Hello, Wi-Fi Printer!"
+        const ESC = '\x1B';  // ESC byte
+        const LF = '\x0A';   // Line feed (new line)
+        const printData = ESC + '!' + '\x00' + 'Hello, Wi-Fi Printer!' + LF + LF;
+
+        const printerIP = printerList.value === 'manual' ? printerIPInput.value : printerList.value;
+
+        // Send print data and printer IP to the Node.js server
+        ws.send(JSON.stringify({ printerIP, data: printData }));
+    });
+</script>
+
 </body>
 
 </html>

@@ -7,97 +7,135 @@
     <title>Wi-Fi Printer</title>
 </head>
 
-<body>
-    <h1>Wi-Fi Printer</h1>
-
-    <div>
-        <label for="printer-list">Available Printers:</label>
-        <select id="printer-list">
-            <option value="" disabled selected>Select a printer</option>
-            <option value="192.168.100.89">Printer 1 (192.168.100.89)</option>
-            <option value="192.168.100.1">Printer 2 (192.168.100.1)</option>
-            <option value="manual">Enter IP Manually</option>
-        </select>
-        <div id="manual-input" style="display: none;">
-            <input type="text" id="printer-ip" placeholder="Enter Printer IP Address">
-        </div>
-        <button id="connect">Connect to Printer</button>
-        <button id="print" disabled>Print Test Page</button>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
+    <div style="text-align: center;">
+        <img src="assets/images/thermal.png" alt="Wi-Fi Printer"
+            style="width: 100px; height: auto; margin-bottom: 5px;">
+        <h1 style="text-align: center; color: #333;">Wi-Fi Printer</h1>
     </div>
 
-    <p id="status">Not connected</p>
+    <div
+        style="max-width: 400px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+        <div style="margin-bottom: 15px;">
+            <label for="printer-list" style="font-weight: bold; margin-bottom: 5px; display: block;">Available
+                Printers:</label>
+            <select id="printer-list"
+                style="width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="" disabled selected>Select a printer</option>
+                <option value="192.168.100.89">Printer 1 (192.168.100.89)</option>
+                <option value="192.168.100.1">Printer 2 (192.168.100.1)</option>
+                <option value="manual">Enter IP Manually</option>
+            </select>
+        </div>
 
-<script>
-    let ws;
-    let connected = false;
+        <div id="manual-input" style="display: none; margin-bottom: 15px;">
+            <input type="text" id="printer-ip" placeholder="Enter Printer IP Address"
+                style="width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
 
-    const connectButton = document.getElementById('connect');
-    const printButton = document.getElementById('print');
-    const statusElement = document.getElementById('status');
-    const printerList = document.getElementById('printer-list');
-    const printerIPInput = document.getElementById('printer-ip');
-    const manualInputDiv = document.getElementById('manual-input');
+        <button id="connect"
+            style="width: 100%; padding: 12px; font-size: 16px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">Connect
+            to Printer</button>
+        <button id="print" disabled
+            style="width: 100%; padding: 12px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Print
+            Test Page</button>
+    </div>
 
-    printerList.addEventListener('change', (event) => {
-        if (event.target.value === 'manual') {
-            manualInputDiv.style.display = 'block';
-        } else {
-            manualInputDiv.style.display = 'none';
-        }
-    });
+    <p id="status" style="text-align: center; font-weight: bold; margin-top: 15px; color: #ff0000;">Not connected</p>
 
-    connectButton.addEventListener('click', () => {
-        let printerIP = printerList.value;
+    <script>
+        let ws;
+        let connected = false;
 
-        if (printerIP === 'manual') {
-            printerIP = printerIPInput.value;
-        }
+        const connectButton = document.getElementById('connect');
+        const printButton = document.getElementById('print');
+        const statusElement = document.getElementById('status');
+        const printerList = document.getElementById('printer-list');
+        const printerIPInput = document.getElementById('printer-ip');
+        const manualInputDiv = document.getElementById('manual-input');
 
-        if (!printerIP) {
-            alert('Please select or enter a valid printer IP address.');
-            return;
-        }
+        printerList.addEventListener('change', (event) => {
+            if (event.target.value === 'manual') {
+                manualInputDiv.style.display = 'block';
+            } else {
+                manualInputDiv.style.display = 'none';
+            }
+        });
 
-        ws = new WebSocket('ws://localhost:8080');
+        connectButton.addEventListener('click', () => {
+            let printerIP = printerList.value;
 
-        ws.onopen = () => {
-            connected = true;
-            statusElement.textContent = 'Connected to WebSocket server';
-            statusElement.style.color = 'green';
-            printButton.disabled = false;
-        };
+            if (printerIP === 'manual') {
+                printerIP = printerIPInput.value;
+            }
 
-        ws.onerror = (error) => {
-            console.error('WebSocket Error:', error);
-            statusElement.textContent = 'Error connecting to WebSocket server';
-            statusElement.style.color = 'red';
-        };
+            if (!printerIP) {
+                alert('Please select or enter a valid printer IP address.');
+                return;
+            }
 
-        ws.onclose = () => {
-            connected = false;
-            statusElement.textContent = 'Disconnected from WebSocket server';
-            statusElement.style.color = 'red';
-            printButton.disabled = true;
-        };
-    });
+            ws = new WebSocket('ws://localhost:8080');
 
-    printButton.addEventListener('click', () => {
-        if (!connected || !ws) {
-            console.error('Not connected to WebSocket server');
-            return;
-        }
+            ws.onopen = () => {
+                connected = true;
+                statusElement.textContent = 'Connected to WebSocket server';
+                statusElement.style.color = 'green';
+                printButton.disabled = false;
+            };
 
-        // ESC/POS commands for printing "Hello, Wi-Fi Printer!"
-        const ESC = '\x1B';  // ESC byte
-        const LF = '\x0A';   // Line feed (new line)
-        const printData = ESC + '!' + '\x00' + 'Hello, Wi-Fi Printer!' + LF + LF;
+            ws.onerror = (error) => {
+                console.error('WebSocket Error:', error);
+                statusElement.textContent = 'Error connecting to WebSocket server';
+                statusElement.style.color = 'red';
+            };
 
-        const printerIP = printerList.value === 'manual' ? printerIPInput.value : printerList.value;
+            ws.onclose = () => {
+                connected = false;
+                statusElement.textContent = 'Disconnected from WebSocket server';
+                statusElement.style.color = 'red';
+                printButton.disabled = true;
+            };
+        });
 
-        // Send print data and printer IP to the Node.js server
-        ws.send(JSON.stringify({ printerIP, data: printData }));
-    });
-</script>
+        printButton.addEventListener('click', () => {
+            if (!connected || !ws) {
+                console.error('Not connected to WebSocket server');
+                return;
+            }
+
+            // ESC/POS commands for formatting receipt data
+            const ESC = '\x1B';  // ESC byte
+            const LF = '\x0A';   // Line feed (new line)
+            const init = ESC + '@'; // Initialize printer
+
+            // Sample receipt data for a restaurant
+            const header = ESC + '!' + '\x38' + '     Restaurant Name' + LF + LF;  // Bold, large text
+            const item1 = ESC + '!' + '\x00' + 'Burger     x1     $5.00' + LF;
+            const item2 = ESC + '!' + '\x00' + 'Fries      x2     $3.00' + LF;
+            const item3 = ESC + '!' + '\x00' + 'Soda       x1     $2.00' + LF;
+            const total = ESC + '!' + '\x01' + '--------------------' + LF + 'Total:          $13.00' + LF + LF;
+
+          // ESC/POS command for QR Code
+            const qrCodeCommand = ESC + '(k' + String.fromCharCode(0x03) + String.fromCharCode(0x00) + String.fromCharCode(0x31) +
+                String.fromCharCode(0x51) + String.fromCharCode(0x0A) + '' + LF;
+
+
+            const footer = LF + 'Thank you for dining with us!' + LF;
+
+            // Add some extra line feeds to ensure all data is printed before the cut
+            const extraSpacing = LF + LF + LF + LF + LF; // Adjust the number of line feeds as necessary
+
+            // Cut command (Full cut)
+            const cutCommand = ESC + 'i';
+
+            const printData = init + header + item1 + item2 + item3 + total + qrCodeCommand + footer + extraSpacing + cutCommand;
+
+            const printerIP = printerList.value === 'manual' ? printerIPInput.value : printerList.value;
+
+            // Send print data and printer IP to the Node.js server
+            ws.send(JSON.stringify({ printerIP, data: printData }));
+        });
+    </script>
 
 </body>
 
